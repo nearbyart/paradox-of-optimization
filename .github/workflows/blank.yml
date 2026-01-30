@@ -1,0 +1,96 @@
+import hmac
+import hashlib
+import base64
+import time
+from dataclasses import dataclass
+
+"""
+PROJECT: THE PARADOX OF OPTIMIZATION
+ARCHITECT: Laith M. Salman
+DESCRIPTION: Recursive HMAC Authentication ('The Shake')
+"""
+
+# --- Configuration & Storage (The "Pocket") ---
+@dataclass
+class CloudKeyStore:
+    """Simulates the secure vault (The 'Honey' Jar)."""
+    api_admin_id: str
+    _secret_key: bytes  # The 'Colored Piano Key'
+
+    def get_secret(self) -> bytes:
+        return self._secret_key
+
+# --- Metrics Engine (The "Eye") ---
+class AuthMetrics:
+    def __init__(self):
+        self.attempts = 0
+        self.successes = 0
+    
+    def log_attempt(self, success: bool):
+        self.attempts += 1
+        if success:
+            self.successes += 1
+            
+    def get_consistency_metrics(self):
+        """Returns <con/con%%> - The Stability of the Constraint."""
+        if self.attempts == 0:
+            return "0.00%"
+        ratio = (self.successes / self.attempts) * 100
+        return f"{ratio:.2f}%"
+
+# --- The Logic (The Constraint) ---
+class ReverseAuthenticator:
+    def __init__(self, key_store: CloudKeyStore):
+        self.store = key_store
+        self.metrics = AuthMetrics()
+
+    def generate_challenge(self) -> str:
+        """Step 1: The Shake (Admin throws chaos)."""
+        nonce = str(time.time_ns()).encode('utf-8')
+        return base64.b64encode(nonce).decode('utf-8')
+
+    def user_sign_challenge(self, challenge: str, user_secret: bytes) -> str:
+        """Step 2: The User Constraint (Wrapping chaos in the Key)."""
+        message = challenge.encode('utf-8')
+        signature = hmac.new(user_secret, message, hashlib.sha256).hexdigest()
+        return f"{challenge}.{signature}"
+
+    def verify_reverse_process(self, received_package: str) -> bool:
+        """Step 3: The Mirror (System reverses logic to verify)."""
+        try:
+            challenge, user_signature = received_package.split('.')
+            stored_secret = self.store.get_secret()
+            
+            # The System performs the work itself
+            local_signature = hmac.new(
+                stored_secret, 
+                challenge.encode('utf-8'), 
+                hashlib.sha256
+            ).hexdigest()
+            
+            is_valid = hmac.compare_digest(local_signature, user_signature)
+            self.metrics.log_attempt(is_valid)
+            return is_valid
+            
+        except ValueError:
+            self.metrics.log_attempt(False)
+            return False
+
+# --- Execution Block ---
+if __name__ == "__main__":
+    # The 'Honey' (Secret)
+    MASTER_KEY = b'Laith_Salman_Constraint_999'
+    
+    # Initialize
+    system = ReverseAuthenticator(CloudKeyStore("Admin_01", MASTER_KEY))
+    print("--- PARADOX ENGINE ONLINE ---")
+    
+    # Run The Shake
+    challenge = system.generate_challenge()
+    print(f"System Challenge: {challenge}")
+    
+    # Valid Response
+    response = system.user_sign_challenge(challenge, MASTER_KEY)
+    valid = system.verify_reverse_process(response)
+    print(f"Authentication Result: {valid}")
+    print(f"System Stability <con/con%%>: {system.metrics.get_consistency_metrics()}")
